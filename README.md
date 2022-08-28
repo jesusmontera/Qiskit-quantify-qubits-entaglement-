@@ -7,7 +7,12 @@ The other file, entagleclass.py calculates entaglement for each instruction:
  105,u(0), the qubit 0 is entagled with Q1 negative(Q1X) 0.559  and  with Q2 positive 0.575 
  
  105) u ( 0)
+
 entagle by statevector.probabilities_dict + purity + search cx
+
 Q0 = 0.56739  purity = 0.51037 detail [ Q1X =0.559 Q2  =0.575  ]
+
 Q1 = 0.55937  purity = 0.52229 detail [ Q0X =0.559  ]
+
 Q2 = 0.57541  purity = 0.54689 detail [ Q0  =0.575  ]
+
