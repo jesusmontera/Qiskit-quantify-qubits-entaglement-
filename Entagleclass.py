@@ -10,8 +10,8 @@ class EntagleClass:
         self.entgArr = np.zeros([nq, nq])
         self.entgXlist=  np.full((nq, nq), ' ', dtype='U1')
         self.puritys= np.zeros(nq)      
-
-    def __AreCXentagled(self, qc, datapos, a, b):
+    #looks for cx instructions
+    def __AreCXentagled(self, qc, datapos, a, b):        
         bEnta = False
         for i in range(datapos+1):            
             tupi=qc.data[i]            
@@ -25,19 +25,28 @@ class EntagleClass:
                 if isa and isb:
                     bEnta = not bEnta
         return bEnta
-# this function calcs entagled by only dictionary so it's your for testing              
-    def calcSVentagle(self,sv,bDir = True):
-        dic = sv.probabilities_dict()
-        if bDir:
-            self.entgXlist=  np.full((self.nq, self.nq), ' ', dtype='U1')
-        else: self.entgXlist=  np.full((self.nq, self.nq), 'X', dtype='U1')
-        for a in range(self.nq):                
-            for b  in range(self.nq):                
-                self.entgArr[a][b] = self.__CalcEntagleDic(dic,a,b,bDir)
+    # this function calcs entagled by purity and dictionary
+    def calcSVentagle(self,sv):
+        self.entgArr= np.zeros([self.nq, self.nq])
+        self.entgXlist=  np.full((self.nq, self.nq), ' ', dtype='U1')
+        self.__CalcPuritysFromSV (sv)
+        dic = sv.probabilities_dict()        
+        for a in range(self.nq):
+            if (self.puritys[a]<1.0):
+                for b in range(self.nq):
+                    if a is not b and self.puritys[b]<1.0:                                                        
+                        self.entgArr[a][b] = self.__CalcEntagleDic(dic,a,b,True)                            
+                        # if there are cx and purity is less than one qubits must be entagled negative(10 01)
+                        if self.entgArr[a][b]==0:
+                            self.entgArr[a][b] = self.__CalcEntagleDic(dic,a,b,False)
+                            self.entgXlist[a][b]='X'
+                        elif self.entgArr[a][b]<0.49999:
+                            self.entgArr[a][b] = 1.0 - self.entgArr[a][b]
+                            self.entgXlist[a][b]='X'
 
-      # this is the main function that calcs entagled by dictionary,
-      #circuit instruction and purity 
 
+     # this function only works in the circuit does itnt made with ccx or mct
+    # no matter if the circuit was decomposed before in cx gates
     def calc_QC_SVentagle(self,qc,datapos,sv):
         
         self.entgArr= np.zeros([self.nq, self.nq])
@@ -91,7 +100,7 @@ class EntagleClass:
             m += self.puritys[a]
         return np.round(m / self.nq,5)
     def GetEntagleString(self, bDetail=False):
-        s= "entagle by statevector.probabilities_dict + purity + search cx\n"
+        s= "entagle by statevector.probabilities_dict + purity \n"
         na=0
         for a in range(self.nq):
             ea = np.round(self.__GetQubitEntagle(a),5)
